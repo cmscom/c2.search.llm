@@ -1,1 +1,8 @@
 -r requirements_plone60.txt
+langchain
+tiktoken
+torch
+transformers
+accelerate
+bitsandbytes
+sentence_transformers

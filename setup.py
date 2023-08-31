@@ -54,6 +54,13 @@ setup(
         'z3c.jbot',
         'plone.api>=1.8.4',
         'plone.app.dexterity',
+        'langchain',
+        'tiktoken',
+        'torch',
+        'transformers',
+        'accelerate',
+        'bitsandbytes',
+        'sentence_transformers',
     ],
     extras_require={
         'test': [
