@@ -1,0 +1,6 @@
+[report]
+include =
+    src/c2.search/*
+omit =
+    */test*
+    */upgrades/*

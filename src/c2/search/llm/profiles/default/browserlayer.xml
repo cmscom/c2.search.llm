@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<layers>
+  <layer
+      name="c2.search.llm"
+      interface="c2.search.llm.interfaces.IC2SearchLlmLayer"
+      />
+</layers>
