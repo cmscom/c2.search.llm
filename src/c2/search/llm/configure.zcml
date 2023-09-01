@@ -1,5 +1,6 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
+    xmlns:five="http://namespaces.zope.org/five"
     xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
     xmlns:i18n="http://namespaces.zope.org/i18n"
     xmlns:plone="http://namespaces.plone.org/plone"
@@ -7,6 +8,7 @@
     i18n_domain="c2.search.llm">
 
   <i18n:registerTranslations directory="locales" />
+  <five:registerPackage package="." initialize=".initialize" />
 
   <!--
     Be careful if you use general includeDependencies, it can have side effects!
@@ -37,11 +39,15 @@
       name="c2.search.llm-hiddenprofiles"
       />
 
-  <subscriber
+  <!-- subscriber
       zcml:condition="installed zope.lifecycleevent"
       for="plone.dexterity.interfaces.IDexterityContent
           zope.lifecycleevent.IObjectModifiedEvent"
       handler=".events.embedding_from_text"
-        />
+        /-->
+
+  <adapter 
+      factory=".indexers.llm_vector" 
+      name="llm_vector" />
 
 </configure>

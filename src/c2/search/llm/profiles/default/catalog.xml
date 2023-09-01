@@ -1,4 +1,9 @@
 <?xml version="1.0"?>
 <object name="portal_catalog">
-  <!-- <column value="some-name"/> -->
+    <index name="llm_vector" meta_type="VectorIndex">
+        <indexed_attr value="llm_vector"/>
+    </index>
+    <index name="dummy" meta_type="FieldIndex">
+        <indexed_attr value="dummy"/>
+    </index>
 </object>
