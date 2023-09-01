@@ -1,6 +1,7 @@
 -r requirements_plone60.txt
 langchain
 tiktoken
+numpy
 torch
 transformers
 accelerate

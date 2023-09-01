@@ -56,6 +56,7 @@ setup(
         'plone.app.dexterity',
         'langchain',
         'tiktoken',
+        'numpy'
         'torch',
         'transformers',
         'accelerate',
