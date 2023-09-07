@@ -14,6 +14,10 @@ try:
 except ImportError:
     SearchableText = None
 
+import numpy as np
+import torch
+from torch.nn.functional import cosine_similarity
+
 from c2.search.llm.interfaces import IVectorIndex
 from c2.search.llm.embedding import get_embeddings
 
@@ -23,6 +27,8 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
     """
     """
     meta_type = 'VectorIndex'
+    operators = ('and', 'or')
+    useOperator = 'or'
     query_options = ('query', 'range', 'not')
 
     manage_options = (
@@ -96,7 +102,34 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
         return []
 
     def query_index(self, record, resultset=None):
-        print("VectorIndex++++++++++++++++++++++++++ query_index", record, resultset)  # タイミング未確認
+        query_str = ' '.join(record.keys)
+        if not query_str:
+            return None
+        print("query_str", query_str)
+        query = get_embeddings(query_str)
+        docids, vectors = self._get_all_doc_vectors()
+        indices, scores = self._get_similarities(vectors, query)
+        # print(docids[indices].tolist())
+        # print(scores.tolist())
+        return docids[indices].tolist()
+
+    def _get_all_doc_vectors(self):
+        items = self._docvectors.items()
+        vectors = np.concatenate([v for k, v in items])
+        docids = np.concatenate([[k] * v.shape[0] for k, v in items])
+        return docids, vectors
+
+    def _get_similarities(self, vectors, query, k=10):
+        print(vectors.shape[0])
+        if vectors.shape[0] < k:
+            k = vectors.shape[0]
+        t_vectors = torch.tensor(vectors, dtype=torch.float32)
+        t_query = torch.tensor(query, dtype=torch.float32)
+        similarities = cosine_similarity(t_vectors, t_query)
+        top10_values, top10_indices = torch.topk(similarities, k)
+        # print(f"Top10の類似度: {top10_values.numpy()}")
+        # print(f"Top10のインデックス: {top10_indices.numpy()}")
+        return top10_indices.numpy(), top10_values.numpy()
 
     def getEntryForObject(self, documentId, default=None):
         print("VectorIndex++++++++++++++++++++++++++ getEntryForObject", documentId, default)  # タイミング未確認
