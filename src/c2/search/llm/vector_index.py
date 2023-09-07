@@ -1,5 +1,6 @@
 from App.special_dtml import DTMLFile
-# from Products.PluginIndexes.unindex import UnIndex
+from BTrees.IOBTree import IOBTree
+from BTrees.Length import Length
 from OFS.SimpleItem import SimpleItem
 from Acquisition import Implicit
 from Persistence import Persistent
@@ -8,7 +9,13 @@ from AccessControl.class_init import InitializeClass
 from AccessControl.SecurityInfo import ClassSecurityInfo
 from AccessControl.Permissions import search_zcatalog
 from Products.PluginIndexes.interfaces import IQueryIndex
+try:
+    from plone.app.contenttypes.indexers import SearchableText
+except ImportError:
+    SearchableText = None
+
 from c2.search.llm.interfaces import IVectorIndex
+from c2.search.llm.embedding import get_embeddings
 
 
 @implementer(IVectorIndex, IQueryIndex)
@@ -20,37 +27,73 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
 
     manage_options = (
         {'label': 'Settings', 'action': 'manage_main'},
-        {'label': 'Browse', 'action': 'manage_browse'},
     )
-
 
     manage = manage_main = DTMLFile('dtml/manageVectorIndex', globals())
     manage_main._setName('manage_main')
-    manage_browse = DTMLFile('dtml/browseIndex', globals())
 
     security = ClassSecurityInfo()
     # security.declareObjectProtected(manage_zcatalog_indexes)
 
     def __init__(self, id, extra=None, *args, **kwargs):
         self.id = id
-        print(f"extra: ", extra )
-        print(f"args: {args}")
-        print(f"kwargs: {kwargs}")
+        # print(f"extra: {extra}")
+        # print(f"args: {args}")
+        # print(f"kwargs: {kwargs}")
+        self._docvectors = IOBTree()
+        self.length = Length()
+        self.document_count = Length()
+
+    def _change_length(self, name, value):
+        length_obj = getattr(self, name, None)
+        if length_obj is not None:
+            length_obj.change(value)
+        else:
+            setattr(self, name, Length(value))
+
+    def index_object(self, documentId, obj, threshold=None):
+        count = 0
+        if SearchableText is not None:
+            text = SearchableText(obj)
+            row = self.index_doc(documentId, text)
+            count += row
+        fields = self.getIndexSourceNames()
+        for field in fields:
+            value = getattr(obj, field, None)
+            if value is not None:
+                row = self.index_doc(documentId, value)
+                count += row
+        return count  # Number of vector rows
+
+    def index_doc(self, docid, text):
+        old_vectors = self._docvectors.get(docid, None)
+        if old_vectors is not None:
+            self._change_length("document_count", -1)
+            old_row, old_col = old_vectors.shape
+            self._change_length("length", -old_row)
+        vectors = get_embeddings(text)
+        row, col = vectors.shape
+        print("row, col", row, col)
+        self._change_length("document_count", 1)
+        self._change_length("length", row)
+        self._docvectors[docid] = vectors
+        return row
+
+    def unindex_object(self, docid):
+        old_vectors = self._docvectors.get(docid, None)
+        if old_vectors is not None:
+            self._change_length("document_count", -1)
+            old_row, old_col = old_vectors.shape
+            self._change_length("length", -old_row)
+        del self._docvectors[docid]
+
+    def _apply_index(self, request):
+        print("VectorIndex+++++++@@@@@@@@@@@@@@@@+++ _apply_index", request)  # タイミング未確認
 
     @security.protected(search_zcatalog)
     def query(self, query, nbest=10):
         print("VectorIndex++++++++++++++++++++++++++ query", query, nbest)  # タイミング未確認
         return []
-    
-    def index_object(self, documentId, obj, threshold=None):
-        print("VectorIndex++++++++++++++++++++++++++ index_object", documentId, obj, threshold)
-        return 1  # TODO
-
-    def unindex_object(self, docid):
-        print("VectorIndex++++++++++++++++++++++++++ unindex_object", docid)
-
-    def _apply_index(self, request):
-        print("VectorIndex++++++++++++++++++++++++++ _apply_index", request)  # タイミング未確認
 
     def query_index(self, record, resultset=None):
         print("VectorIndex++++++++++++++++++++++++++ query_index", record, resultset)  # タイミング未確認
@@ -61,42 +104,28 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
     def uniqueValues(self, name=None, withLengths=0): 
         print("VectorIndex++++++++++++++++++++++++++ uniqueValues", name, withLengths)  # タイミング未確認
         raise NotImplementedError
-    
+
     def numObjects(self):
-        print("VectorIndex++++++++++++++++++++++++++ numObjects")
-        return 0
+        return self.document_count()
 
     def indexSize(self):
-        print("VectorIndex++++++++++++++++++++++++++ indexSize")
-        return 0
-    
+        return self.length()
+
     def clear(self):
-        print("VectorIndex++++++++++++++++++++++++++ clear")
+        self._docvectors = IOBTree()
+        self.length = Length()
+        self.document_count = Length()
 
     def getIndexSourceNames(self):
-        print("VectorIndex++++++++++++++++++++++++++ getIndexSourceNames")
-        return []
-    
+        return getattr(self, 'indexed_attrs', [self.id])  # TODO: Not using it now?
+
     def getIndexQueryNames(self):
-        print("VectorIndex++++++++++++++++++++++++++ getIndexQueryNames")  # タイミング未確認
-        return []
-    
+        # print("getIndexQueryNames------------------------", f"{self.length()} / {self.document_count()}")
+        return (self.id,)
+
     def getIndexType(self):
         print("getIndexType")  # タイミング未確認
         return "VectorIndex"
-
-
-    # def index_doc(self, docid, text):
-    #     print("index_doc", docid, text)
-
-    # def _reindex_doc(self, docid, text):
-    #     print("_reindex_doc", docid, text)
-
-    # def unindex_doc(self, docid):
-    #     print("unindex_doc", docid)
-
-    # def search(self, term):
-    #     print("search", term)
 
 
 InitializeClass(VectorIndex)

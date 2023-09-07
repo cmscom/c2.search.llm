@@ -46,8 +46,8 @@
       handler=".events.embedding_from_text"
         /-->
 
-  <adapter 
+  <!-- adapter 
       factory=".indexers.llm_vector" 
-      name="llm_vector" />
+      name="llm_vector" / -->
 
 </configure>
