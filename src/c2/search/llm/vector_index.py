@@ -1,5 +1,6 @@
 from App.special_dtml import DTMLFile
 from BTrees.IOBTree import IOBTree
+from BTrees.IIBTree import IIBucket
 from BTrees.Length import Length
 from OFS.SimpleItem import SimpleItem
 from Acquisition import Implicit
@@ -29,7 +30,7 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
     meta_type = 'VectorIndex'
     operators = ('and', 'or')
     useOperator = 'or'
-    query_options = ('query', 'range', 'not')
+    query_options = ('query')
 
     manage_options = (
         {'label': 'Settings', 'action': 'manage_main'},
@@ -79,7 +80,7 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
             self._change_length("length", -old_row)
         vectors = get_embeddings(text)
         row, col = vectors.shape
-        print("row, col", row, col)
+        # print("row, col", row, col)
         self._change_length("document_count", 1)
         self._change_length("length", row)
         self._docvectors[docid] = vectors
@@ -105,13 +106,17 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
         query_str = ' '.join(record.keys)
         if not query_str:
             return None
-        print("query_str", query_str)
+        # print("query_str", query_str)
         query = get_embeddings(query_str)
         docids, vectors = self._get_all_doc_vectors()
         indices, scores = self._get_similarities(vectors, query)
+        bucket = IIBucket()
+        for docid, score in zip(docids[indices], scores):
+            bucket[int(docid)] = int(score * 100_000_000)  # TODO これでいいのかな？intにする必要ある
         # print(docids[indices].tolist())
         # print(scores.tolist())
-        return docids[indices].tolist()
+        # return docids[indices].tolist()
+        return bucket
 
     def _get_all_doc_vectors(self):
         items = self._docvectors.items()
@@ -120,7 +125,7 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
         return docids, vectors
 
     def _get_similarities(self, vectors, query, k=10):
-        print(vectors.shape[0])
+        # print(vectors.shape[0])
         if vectors.shape[0] < k:
             k = vectors.shape[0]
         t_vectors = torch.tensor(vectors, dtype=torch.float32)
