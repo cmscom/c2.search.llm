@@ -10,6 +10,7 @@ from AccessControl.class_init import InitializeClass
 from AccessControl.SecurityInfo import ClassSecurityInfo
 from AccessControl.Permissions import search_zcatalog
 from Products.PluginIndexes.interfaces import IQueryIndex
+
 try:
     from plone.app.contenttypes.indexers import SearchableText
 except ImportError:
@@ -25,19 +26,17 @@ from c2.search.llm.embedding import get_embeddings
 
 @implementer(IVectorIndex, IQueryIndex)
 class VectorIndex(Persistent, Implicit, SimpleItem):
-    """
-    """
-    meta_type = 'VectorIndex'
-    operators = ('and', 'or')
-    useOperator = 'or'
-    query_options = ('query')
+    """ """
 
-    manage_options = (
-        {'label': 'Settings', 'action': 'manage_main'},
-    )
+    meta_type = "VectorIndex"
+    operators = ("and", "or")
+    useOperator = "or"
+    query_options = ("query",)
 
-    manage = manage_main = DTMLFile('dtml/manageVectorIndex', globals())
-    manage_main._setName('manage_main')
+    manage_options = ({"label": "Settings", "action": "manage_main"},)
+
+    manage = manage_main = DTMLFile("dtml/manageVectorIndex", globals())
+    manage_main._setName("manage_main")
 
     security = ClassSecurityInfo()
     # security.declareObjectProtected(manage_zcatalog_indexes)
@@ -103,7 +102,7 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
         return []
 
     def query_index(self, record, resultset=None):
-        query_str = ' '.join(record.keys)
+        query_str = " ".join(record.keys)
         if not query_str:
             return None
         # print("query_str", query_str)
@@ -137,10 +136,16 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
         return top10_indices.numpy(), top10_values.numpy()
 
     def getEntryForObject(self, documentId, default=None):
-        print("VectorIndex++++++++++++++++++++++++++ getEntryForObject", documentId, default)  # タイミング未確認
+        print(
+            "VectorIndex++++++++++++++++++++++++++ getEntryForObject",
+            documentId,
+            default,
+        )  # タイミング未確認
 
-    def uniqueValues(self, name=None, withLengths=0): 
-        print("VectorIndex++++++++++++++++++++++++++ uniqueValues", name, withLengths)  # タイミング未確認
+    def uniqueValues(self, name=None, withLengths=0):
+        print(
+            "VectorIndex++++++++++++++++++++++++++ uniqueValues", name, withLengths
+        )  # タイミング未確認
         raise NotImplementedError
 
     def numObjects(self):
@@ -155,7 +160,7 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
         self.document_count = Length()
 
     def getIndexSourceNames(self):
-        return getattr(self, 'indexed_attrs', [self.id])  # TODO: Not using it now?
+        return getattr(self, "indexed_attrs", [self.id])  # TODO: Not using it now?
 
     def getIndexQueryNames(self):
         # print("getIndexQueryNames------------------------", f"{self.length()} / {self.document_count()}")
@@ -167,11 +172,11 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
 
 
 InitializeClass(VectorIndex)
-manage_addVectorIndexForm = DTMLFile('dtml/addVectorIndex', globals())
+manage_addVectorIndexForm = DTMLFile("dtml/addVectorIndex", globals())
 
 
-def manage_addVectorIndex(self, id, extra=None, REQUEST=None,
-                         RESPONSE=None, URL3=None):
+def manage_addVectorIndex(self, id, extra=None, REQUEST=None, RESPONSE=None, URL3=None):
     """Add a vector index"""
-    return self.manage_addIndex(id, 'VectorIndex', extra=extra, REQUEST=REQUEST,
-                                RESPONSE=RESPONSE, URL1=URL3)
+    return self.manage_addIndex(
+        id, "VectorIndex", extra=extra, REQUEST=REQUEST, RESPONSE=RESPONSE, URL1=URL3
+    )

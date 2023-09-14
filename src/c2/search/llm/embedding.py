@@ -10,7 +10,7 @@ CHUNK_SIZE = 500
 
 
 def get_embeddings(text: str) -> np.ndarray:
-    texts = [text[i:i+CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE)]
+    texts = [text[i : i + CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE)]
     embeddings = model.encode(texts)
     # print(embeddings.shape)
     # print(type(embeddings))
