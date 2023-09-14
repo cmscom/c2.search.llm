@@ -1,0 +1,17 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
+    i18n_domain="c2.search.llm"
+    >
+
+  <browser:page
+      name="llm-search"
+      for="plone.app.layout.navigation.interfaces.INavigationRoot"
+      class="Products.CMFPlone.browser.search.Search"
+      template="templates/llm-search.pt"
+      permission="zope2.View"
+      />
+
+</configure>

@@ -15,6 +15,8 @@
     Better import explicit packages or configurations ;)
   -->
   <!--<includeDependencies package="." />-->
+  
+  <include package=".browser" />
 
   <genericsetup:registerProfile
       name="default"
