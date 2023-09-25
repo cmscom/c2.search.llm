@@ -106,7 +106,7 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
         if not query_str:
             return None
         # print("query_str", query_str)
-        query = get_embeddings(query_str)
+        query = get_embeddings(query_str, query=True)
         docids, vectors = self._get_all_doc_vectors()
         indices, scores = self._get_similarities(vectors, query)
         bucket = IIBucket()
