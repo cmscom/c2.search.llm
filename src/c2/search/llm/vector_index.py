@@ -111,7 +111,12 @@ class VectorIndex(Persistent, Implicit, SimpleItem):
         indices, scores = self._get_similarities(vectors, query)
         bucket = IIBucket()
         for docid, score in zip(docids[indices], scores):
-            bucket[int(docid)] = int(score * 100_000_000)  # TODO これでいいのかな？intにする必要ある
+            int_docid = int(docid)
+            if int_docid in bucket:
+                pass
+                # bucket[int_docid] += int(score * 100_000_000)
+            else:
+                bucket[int_docid] = int(score * 100_000_000)  # TODO これでいいのかな？intにする必要ある
         # print(docids[indices].tolist())
         # print(scores.tolist())
         # return docids[indices].tolist()
